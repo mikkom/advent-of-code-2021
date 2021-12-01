@@ -1,7 +1,4 @@
-module Day01Part1
-  ( solve,
-  )
-where
+module Day01Part1 where
 
 readInt :: String -> Int
 readInt = read

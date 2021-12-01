@@ -1,17 +1,17 @@
-module Day01Part2
-  ( solve,
-  )
-where
+module Day01Part2 where
+
+import Data.List
 
 readInt :: String -> Int
 readInt = read
 
 readData = fmap readInt . lines
 
-windowed :: Int -> [a] -> [[a]]
-windowed n xs
-  | length xs < n = []
-  | otherwise = take n xs : windowed n (tail xs)
+windowed n xs = unfoldr f xs
+  where
+    f xs
+      | length xs < n = Nothing
+      | otherwise = Just (take n xs, tail xs)
 
 solve input = length $ filter (> 0) $ uncurry (-) <$> pairs
   where
