@@ -2,7 +2,7 @@
 
 module Day04 where
 
-import Data.List (find, groupBy, transpose)
+import Data.List (find, groupBy, transpose, unfoldr)
 import Data.List.Split (splitOn)
 import Data.Maybe (catMaybes, isNothing, listToMaybe, mapMaybe)
 
@@ -10,14 +10,19 @@ type BingoBoard = [[(Int, Bool)]]
 
 type GameState = ([Int], [BingoBoard])
 
+type RoundResult = (BingoBoard, Maybe Int)
+
 main :: IO ()
 main = interact (unlines . sequence [part1, part2] . parse . lines)
 
 part1 :: GameState -> String
-part1 = (++) "Part 1: " <$> show . playBingo
+part1 = (++) "Part 1: " <$> show . playBingo (listToMaybe . mapMaybe snd)
 
 part2 :: GameState -> String
-part2 = (++) "Part 2: " <$> show . playLosingBingo
+part2 = (++) "Part 2: " <$> show . playBingo lastWinner
+  where
+    lastWinner [(_, score)] = score
+    lastWinner _ = Nothing
 
 parse :: [String] -> GameState
 parse ss = (nums, boards)
@@ -34,25 +39,16 @@ parseBoard ss = map parseRow rows
     parseRow :: String -> [(Int, Bool)]
     parseRow = map ((,False) . read) . words
 
-playBingo :: GameState -> Int
-playBingo ([], boards) = error "No bingo :("
-playBingo (n : ns, boards) = case finalScore scores of
-  Just score -> score
-  Nothing -> playBingo (ns, newBoards)
+playBingo :: ([RoundResult] -> Maybe Int) -> GameState -> Int
+playBingo endRule = head . mapMaybe endRule . unfoldr f
   where
-    (newBoards, scores) = unzip $ map (playRound n) boards
-    finalScore = listToMaybe . catMaybes
+    f ([], _) = Nothing
+    f (n : ns, boards) = Just (newState, (ns, remainingBoards))
+      where
+        newState = map (playRound n) boards
+        remainingBoards = map fst $ filter (isNothing . snd) newState
 
-playLosingBingo :: GameState -> Int
-playLosingBingo ([], boards) = error "No bingo :("
-playLosingBingo (n : ns, boards) = case map snd newState of
-  [Just score] -> score
-  _ -> playLosingBingo (ns, remainingBoards newState)
-  where
-    newState = map (playRound n) boards
-    remainingBoards = map fst . filter (isNothing . snd)
-
-playRound :: Int -> BingoBoard -> (BingoBoard, Maybe Int)
+playRound :: Int -> BingoBoard -> RoundResult
 playRound n board
   | newBoard == board = (newBoard, Nothing)
   | otherwise = (newBoard, checkBoard newBoard n)
