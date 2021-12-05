@@ -2,46 +2,40 @@
 
 module Day05 where
 
-import Control.Arrow ((&&&))
 import Data.List.Split (splitOn)
 import qualified Data.Map.Monoidal as M
-import Data.Monoid (Sum (Sum))
+import Data.Monoid (Sum)
 
-type Int' = Sum Int
+type Point = (Int, Int)
 
-type Point = (Int', Int')
+data Line = Line Point Point deriving (Eq, Show)
 
-type Line = (Point, Point)
-
-type PointMap = M.MonoidalMap Point Int'
+type PointMap = M.MonoidalMap Point (Sum Int)
 
 main :: IO ()
 main = interact (unlines . sequence [part1, part2] . map parseLine . lines)
 
 part1 :: [Line] -> String
-part1 = (++) "Part 1: " <$> show . countOverlaps . map (toPointMap True)
+part1 = (++) "Part 1: " <$> show . countOverlaps . map toPointMap . filter isStraight
 
 part2 :: [Line] -> String
-part2 = (++) "Part 2: " <$> show . countOverlaps . map (toPointMap False)
+part2 = (++) "Part 2: " <$> show . countOverlaps . map toPointMap
 
 countOverlaps :: [PointMap] -> Int
 countOverlaps = M.size . M.filter (> 1) . mconcat
 
-toPointMap :: Bool -> Line -> PointMap
-toPointMap skipDiagonal = M.fromList . (map (,1) . points)
+toPointMap :: Line -> PointMap
+toPointMap = M.fromList . (map (,1) . points)
   where
-    points (p1, p2)
-      | skipDiagonal && dx /= 0 && dy /= 0 = []
-      | otherwise = range (<> (dx, dy)) p1 p2
-      where
-        (dx, dy) = (delta fst, delta snd)
-        delta f = signum $ f p2 - f p1
+    points (Line (x1, y1) (x2, y2)) = zip (range x1 x2) (range y1 y2)
+    range a b = [a, a + signum (b - a) .. b]
+
+isStraight :: Line -> Bool
+isStraight (Line (x1, y1) (x2, y2)) = x1 == x2 || y1 == y2
 
 parseLine :: String -> Line
-parseLine = (&&&) (parsePoint . head) (parsePoint . last) . words
+parseLine = uncurry Line . toPair . map toPoint . splitOn " -> "
   where
-    parsePoint = (&&&) (head . coords) (last . coords)
-    coords = map (Sum . read) . splitOn ","
-
-range :: Eq t => (t -> t) -> t -> t -> [t]
-range step start end = takeWhile (/= step end) $ iterate step start
+    toPoint = toPair . map read . splitOn ","
+    toPair [x, y] = (x, y)
+    toPair _ = error "Invalid input"
