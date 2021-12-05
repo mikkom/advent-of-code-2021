@@ -10,4 +10,11 @@ snapshots:
     sha256: 63539429076b7ebbab6daa7656cfb079393bf644971156dc349d7c0453694ac2
     url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/18/18.yaml
     size: 586296
-packages: []
+packages:
+- original:
+    hackage: monoidal-containers-0.6.1.0@sha256:5a15cf46aaf4472ca6aa7f4e4fbab903a902e6f320a000a4a9e60a649e4381c8,2219
+  completed:
+    pantry-tree:
+      sha256: a4f25ce481d7fd898f85f246e661cfb13f5ca401284a8d9a66bafa17ff07da74
+      size: 569
+    hackage: monoidal-containers-0.6.1.0@sha256:5a15cf46aaf4472ca6aa7f4e4fbab903a902e6f320a000a4a9e60a649e4381c8,2219

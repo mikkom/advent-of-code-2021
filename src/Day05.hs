@@ -4,14 +4,16 @@ module Day05 where
 
 import Control.Arrow ((&&&))
 import Data.List.Split (splitOn)
-import qualified Data.Map as M
+import qualified Data.Map.Monoidal as M
 import Data.Monoid (Sum (Sum))
 
-type Point = (Sum Int, Sum Int)
+type Int' = Sum Int
+
+type Point = (Int', Int')
 
 type Line = (Point, Point)
 
-type PointMap = M.Map Point Int
+type PointMap = M.MonoidalMap Point Int'
 
 main :: IO ()
 main = interact (unlines . sequence [part1, part2] . map parseLine . lines)
@@ -23,7 +25,7 @@ part2 :: [Line] -> String
 part2 = (++) "Part 2: " <$> show . countOverlaps . map (toPointMap False)
 
 countOverlaps :: [PointMap] -> Int
-countOverlaps = M.size . M.filter (> 1) . M.unionsWith (+)
+countOverlaps = M.size . M.filter (> 1) . mconcat
 
 toPointMap :: Bool -> Line -> PointMap
 toPointMap skipDiagonal = M.fromList . (map (,1) . points)

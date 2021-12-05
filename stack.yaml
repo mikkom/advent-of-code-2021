@@ -42,6 +42,9 @@ packages:
 #
 # extra-deps: []
 
+extra-deps:
+- monoidal-containers-0.6.1.0@sha256:5a15cf46aaf4472ca6aa7f4e4fbab903a902e6f320a000a4a9e60a649e4381c8,2219
+
 # Override default flag values for local packages and extra-deps
 # flags: {}
 
