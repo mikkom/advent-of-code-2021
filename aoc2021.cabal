@@ -29,6 +29,7 @@ library
       Day02
       Day03
       Day04
+      Day05
   other-modules:
       Paths_aoc2021
   hs-source-dirs:
@@ -36,6 +37,7 @@ library
   build-depends:
       array
     , base >=4.7 && <5
+    , containers
     , split
   default-language: Haskell2010
 
@@ -50,6 +52,7 @@ executable aoc2021-exe
       aoc2021
     , array
     , base >=4.7 && <5
+    , containers
     , split
   default-language: Haskell2010
 
@@ -65,5 +68,6 @@ test-suite aoc2021-test
       aoc2021
     , array
     , base >=4.7 && <5
+    , containers
     , split
   default-language: Haskell2010
