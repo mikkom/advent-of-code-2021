@@ -25,6 +25,7 @@ dependencies:
   - array
   - containers
   - monoidal-containers
+  - groups
 
 library:
   source-dirs: src
