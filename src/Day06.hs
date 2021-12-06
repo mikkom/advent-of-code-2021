@@ -1,30 +1,19 @@
+{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
+
 module Day06 where
 
-import Data.List (group, sort)
 import Data.List.Split (splitOn)
 
-type State = [Int]
-
 main :: IO ()
-main = interact (unlines . sequence [part1, part2] . map read . splitOn "," . head . lines)
+main = interact (unlines . sequence [part1, part2] . map read . splitOn ",")
 
-part1 :: [Int] -> String
-part1 = (++) "Part 1: " <$> show . sum . day 80
+part1, part2 :: [Int] -> String
+part1 = ("Part 1: " ++) . show . day 80
+part2 = ("Part 2: " ++) . show . day 256
 
-part2 :: [Int] -> String
-part2 = (++) "Part 2: " <$> show . sum . day 256
-
-day :: Int -> [Int] -> State
-day n = (!! n) . iterate step . initialize
-
-indices :: [Int]
-indices = [0 .. 8]
-
-initialize :: [Int] -> State
-initialize = map (pred . length) . group . sort . (++ indices)
-
-step :: State -> State
-step s = map count indices
+day :: Int -> [Int] -> Int
+day n = (!! n) . map sum . iterate step . counts
   where
-    count 6 = head s + s !! 7
-    count n = s !! (succ n `mod` length indices)
+    counts xs = [length $ filter (== i) xs | i <- [0 .. 8]]
+    step [i0, i1, i2, i3, i4, i5, i6, i7, i8] =
+      [i1, i2, i3, i4, i5, i6, i7 + i0, i8, i0]
