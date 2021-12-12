@@ -25,16 +25,19 @@ parse = foldl' (\m (k, v) -> insertWith (++) k [v] m) empty . (>>= connection)
     listToPairs [x, y] = [(x, y), (y, x)]
     listToPairs _ = error "Invalid input"
 
-paths :: Maybe Cave -> Input -> Set [Cave]
-paths twice input = S.fromList $ findPaths S.empty twice [] "start"
+paths :: Maybe Cave -> Input -> [[Cave]]
+paths twice input = findPaths (S.empty, twice) [] "start"
   where
-    findPaths _ _ path "end" = [reverse ("end" : path)]
-    findPaths visited twice path cave = case (twice, cave) of
-      (_, "start") -> recurse visited' twice
-      (Just _, _) -> recurse visited' twice
-      _ -> recurse visited' Nothing ++ recurse visited (Just cave)
+    findPaths visited path "end" = [reverse ("end" : path)]
+    findPaths visited path cave =
+      concatMap (findPaths visited' (cave : path)) (nextCaves visited' (input ! cave))
       where
-        nextCaves = filter (\c -> not $ S.member c visited) (input ! cave)
-        visited' = if all isLower cave then S.insert cave visited else visited
-        recurse visited twice =
-          concatMap (findPaths visited twice (cave : path)) nextCaves
+        visited' = updateVisited visited cave
+
+    updateVisited visited cave = case visited of
+      (caves, Nothing) | S.member cave caves -> (caves, Just cave)
+      (caves, twice) | all isLower cave -> (S.insert cave caves, twice)
+      _ -> visited
+
+    nextCaves (_, Nothing) = filter (/= "start")
+    nextCaves (caves, _) = filter (not . flip S.member caves)
