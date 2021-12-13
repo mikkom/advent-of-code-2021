@@ -2,11 +2,13 @@
 
 module Day13 where
 
+import Data.Bifunctor (Bifunctor (first, second))
 import Data.List (intercalate)
 import Data.List.Split (splitOn)
-import Data.Set (Set, (\\))
+import Data.Maybe (fromMaybe)
+import Data.Set (Set)
 import qualified Data.Set as S
-import Data.Tuple (swap, uncurry)
+import Data.Tuple (uncurry)
 
 type Point = (Int, Int)
 
@@ -36,14 +38,12 @@ parse input = (parseDots dots, parseFolds folds)
     listToPair [x, y] = (x, y)
 
 fold :: Sheet -> Fold -> Sheet
-fold sheet (FoldLeft x) = foldBy id sheet x
-fold sheet (FoldUp y) = foldBy swap sheet y
+fold sheet (FoldLeft x) = S.map (first $ foldCoord x) sheet
+fold sheet (FoldUp y) = S.map (second $ foldCoord y) sheet
 
-foldBy :: (Point -> Point) -> Sheet -> Int -> Sheet
-foldBy f sheet coord = S.union (sheet \\ folded) (S.map (f . wrap . f) folded)
-  where
-    folded = S.filter ((> coord) . fst . f) sheet
-    wrap (x, y) = (2 * coord - x, y)
+foldCoord :: Int -> Int -> Int
+foldCoord foldPoint coord =
+  if coord > foldPoint then 2 * foldPoint - coord else coord
 
 prettyPrint :: Sheet -> String
 prettyPrint sheet = '\n' : intercalate "\n" (map printRow [0 .. maxy])
