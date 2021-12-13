@@ -6,7 +6,7 @@ import Data.List (intercalate)
 import Data.List.Split (splitOn)
 import Data.Set (Set, (\\))
 import qualified Data.Set as S
-import Data.Tuple (uncurry)
+import Data.Tuple (swap, uncurry)
 
 type Point = (Int, Int)
 
@@ -34,20 +34,14 @@ parse input = (parseDots dots, parseFolds folds)
     listToPair [x, y] = (x, y)
 
 fold :: Sheet -> Point -> Sheet
-fold sheet (x, 0) = foldx sheet x
-fold sheet (0, y) = foldy sheet y
+fold sheet (x, 0) = foldBy id sheet x
+fold sheet (0, y) = foldBy swap sheet y
 
-foldx :: Sheet -> Int -> Sheet
-foldx sheet fx = S.union (sheet \\ folded) (S.map wrap folded)
+foldBy :: (Point -> Point) -> Sheet -> Int -> Sheet
+foldBy f sheet coord = S.union (sheet \\ folded) (S.map (f . wrap . f) folded)
   where
-    folded = S.filter ((> fx) . fst) sheet
-    wrap (x, y) = (2 * fx - x, y)
-
-foldy :: Sheet -> Int -> Sheet
-foldy sheet fy = S.union (sheet \\ folded) (S.map wrap folded)
-  where
-    folded = S.filter ((> fy) . snd) sheet
-    wrap (x, y) = (x, 2 * fy - y)
+    folded = S.filter ((> coord) . fst . f) sheet
+    wrap (x, y) = (2 * coord - x, y)
 
 prettyPrint :: Sheet -> String
 prettyPrint sheet = '\n' : intercalate "\n" (map printRow [0 .. maxy])
