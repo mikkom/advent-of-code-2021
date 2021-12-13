@@ -1,5 +1,3 @@
-{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
-
 module Day13 where
 
 import Data.Bifunctor (Bifunctor (first, second))
@@ -19,11 +17,11 @@ data Fold = FoldLeft Int | FoldUp Int
 type Input = (Sheet, [Fold])
 
 main :: IO ()
-main = interact (unlines . sequence [part1, part2] . uncurry (scanl fold) . parse)
+main = interact (unlines . sequence [part1, part2] . parse)
 
-part1, part2 :: [Sheet] -> String
-part1 = ("Part 1: " ++) . show . length . (!! 1)
-part2 = ("Part 2: " ++) . prettyPrint . last
+part1, part2 :: Input -> String
+part1 = ("Part 1: " ++) . show . length . (!! 1) . uncurry (scanl $ flip fold)
+part2 = ("Part 2: " ++) . prettyPrint . last . uncurry (scanl $ flip fold)
 
 parse :: String -> Input
 parse input = (parseDots dots, parseFolds folds)
@@ -34,12 +32,14 @@ parse input = (parseDots dots, parseFolds folds)
     parseFold str = case parseFoldLine str of
       ["x", value] -> FoldLeft (read value)
       ["y", value] -> FoldUp (read value)
+      _ -> error "Invalid input"
     parseFoldLine = splitOn "=" . last . words
     listToPair [x, y] = (x, y)
+    listToPair _ = error "Invalid input"
 
-fold :: Sheet -> Fold -> Sheet
-fold sheet (FoldLeft x) = S.map (first $ foldCoord x) sheet
-fold sheet (FoldUp y) = S.map (second $ foldCoord y) sheet
+fold :: Fold -> Sheet -> Sheet
+fold (FoldLeft x) = S.map (first $ foldCoord x)
+fold (FoldUp y) = S.map (second $ foldCoord y)
 
 foldCoord :: Int -> Int -> Int
 foldCoord foldPoint coord =
