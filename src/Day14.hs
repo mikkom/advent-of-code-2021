@@ -2,18 +2,21 @@
 
 module Day14 where
 
-import Data.Bifunctor (Bifunctor (first))
+import Control.Arrow ((&&&))
+import Data.Bifunctor (Bifunctor (bimap, first))
 import Data.List (sort, tails)
 import Data.List.Split (splitOn)
 import Data.Map.Monoidal (MonoidalMap, (!))
 import qualified Data.Map.Monoidal as M
 import Data.Monoid (Sum (Sum, getSum))
 
-type Rules = MonoidalMap String Char
+type Pair = (Char, Char)
+
+type Rules = MonoidalMap Pair Char
 
 type Input = (String, Rules)
 
-type StringCounts = MonoidalMap String (Sum Int)
+type Counts a = MonoidalMap a (Sum Int)
 
 main :: IO ()
 main = interact (unlines . sequence [part1, part2] . parse)
@@ -27,29 +30,28 @@ parse input = (template, parseRules rulePart)
   where
     [template, rulePart] = splitOn "\n\n" input
     parseRules = M.fromList . map parseRule . filter (/= "") . splitOn "\n"
-    parseRule = listToPair . splitOn " -> "
-    listToPair [x, y] = (x, head y)
+    parseRule = bimap listToPair head . listToPair . splitOn " -> "
+    listToPair [x, y] = (x, y)
     listToPair _ = error "Invalid input"
 
-quantityScore :: StringCounts -> Int
-quantityScore = score . sort . map getSum . M.elems
+quantityScore :: Counts Char -> Int
+quantityScore = score . map getSum . M.elems
   where
-    score xs = last xs - head xs
+    score xs = maximum xs - minimum xs
 
-letterCounts :: Input -> [StringCounts]
+letterCounts :: Input -> [Counts Char]
 letterCounts (template, rules) =
   map counts $ iterate (step rules) (foldMap single $ pairs template)
   where
-    pairs = filter ((== 2) . length) . map (take 2) . tails
-    counts = (<> single [head template]) . countLetters
-    countLetters = foldMap (uncurry M.singleton . first tail) . M.assocs
+    pairs xs = zip xs (tail xs)
+    counts = (<> single (head template)) . countLetters
+    countLetters = foldMap (uncurry M.singleton . first snd) . M.assocs
 
-step :: Rules -> StringCounts -> StringCounts
+step :: Rules -> Counts Pair -> Counts Pair
 step rules = foldMap (uncurry M.singleton) . concatMap insert . M.assocs
   where
-    insert (pair, n) = map (,n) [[head pair, ch], ch : tail pair]
-      where
-        ch = rules ! pair
+    insert (pair, n) =
+      let ch = rules ! pair in map (,n) [(fst pair, ch), (ch, snd pair)]
 
 single :: (Ord a) => a -> MonoidalMap a (Sum Int)
 single x = M.singleton x (Sum 1)
