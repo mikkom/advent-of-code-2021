@@ -4,6 +4,7 @@
 
 module Day21 where
 
+import Control.Arrow ((&&&))
 import Control.Monad.State.Lazy (MonadState)
 import qualified Control.Monad.State.Lazy as MS
 import Data.Function (fix)
@@ -82,18 +83,12 @@ dirac f state@((PlayerState {score}, player), toggle)
   | checkWin player = return $ if toggle then (1, 0) else (0, 1)
   | otherwise = mconcat <$> sequence recursions
   where
-    recursions =
-      [ recurse 3,
-        times 3 <$> recurse 4,
-        times 6 <$> recurse 5,
-        times 7 <$> recurse 6,
-        times 6 <$> recurse 7,
-        times 3 <$> recurse 8,
-        recurse 9
-      ]
-    recurse = f . updateState state
     checkWin PlayerState {score} = score >= 21
+    recursions = map (\(c, s) -> times c <$> recurse s) $ counts dieSums
+    recurse = f . updateState state
     times n (w1, w2) = (Sum n * w1, Sum n * w2)
+    counts = map ((&&&) length head) . group . sort
+    dieSums = [r1 + r2 + r3 | r1 <- [1 .. 3], r2 <- [1 .. 3], r3 <- [1 .. 3]]
 
 updateState :: DiracState -> Int -> DiracState
 updateState (players, toggle) throw = (updatePlayers players throw, not toggle)
