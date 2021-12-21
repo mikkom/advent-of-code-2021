@@ -32,10 +32,7 @@ main :: IO ()
 main = interact (unlines . sequence [part1, part2] . parse)
 
 part1, part2 :: Input -> String
-part1 = ("Part 1: " ++) . show . answer . play . (,cycle dieSums,0)
-  where
-    dieSums = [6, 5, 4, 3, 2, 1, 0, 9, 8, 7]
-    answer ((PlayerState {score}, _), _, rolls) = score * rolls
+part1 = ("Part 1: " ++) . show . answer . play . (,[1 ..],0)
 part2 = ("Part 2: " ++) . show . getSum . uncurry max . memoizedDirac . (,False)
 
 parse :: String -> Input
@@ -45,15 +42,16 @@ parse input = (p1, p2)
     parsePlayer = getPlayer . read . last . splitOn ": "
     getPlayer position = PlayerState {score = 0, position}
 
+answer :: GameState -> Int
+answer ((PlayerState {score}, _), _, rolls) = score * rolls
+
 play :: GameState -> GameState
 play = head . dropWhile (not . finished) . iterate turn
   where
     finished ((_, PlayerState {score}), _, _) = score >= 1000
-
-turn :: GameState -> GameState
-turn (players, throw : dieSums, rolls) =
-  (updatePlayers players throw, dieSums, rolls + 3)
-turn (_, [], _) = error "Found the end of an infinite list"
+    turn (players, die, rolls) =
+      (updatePlayers players (throw die), drop 3 die, rolls + 3)
+    throw = sum . take 3
 
 updatePlayers :: Input -> Int -> Input
 updatePlayers (PlayerState {position, score}, player) throw =
@@ -89,6 +87,4 @@ dirac f state@((PlayerState {score}, player), toggle)
     times n (w1, w2) = (Sum n * w1, Sum n * w2)
     counts = map ((&&&) length head) . group . sort
     dieSums = [r1 + r2 + r3 | r1 <- [1 .. 3], r2 <- [1 .. 3], r3 <- [1 .. 3]]
-
-updateState :: DiracState -> Int -> DiracState
-updateState (players, toggle) throw = (updatePlayers players throw, not toggle)
+    updateState (players, toggle) n = (updatePlayers players n, not toggle)
