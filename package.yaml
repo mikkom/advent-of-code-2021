@@ -26,6 +26,7 @@ dependencies:
   - containers
   - monoidal-containers
   - groups
+  - mtl
 
 library:
   source-dirs: src
