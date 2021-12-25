@@ -27,6 +27,7 @@ dependencies:
   - monoidal-containers
   - groups
   - mtl
+  - monad-memo
 
 library:
   source-dirs: src

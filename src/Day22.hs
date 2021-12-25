@@ -46,7 +46,10 @@ stepThree :: Bool -> Interval -> Map Interval () -> Map Interval ()
 stepThree on iz acc = case findOverlaps iz acc of
   [] | not on -> acc
   [] -> M.insert iz () acc
-  overlaps -> foldr (handleOverlap on iz id) acc overlaps
+  overlaps -> foldr (handleOverlap on iz f) acc overlaps
+  where
+    f () acc
+      | on = todo
 
 stepTwo :: Bool -> (Interval, Interval) -> YZIntervals -> YZIntervals
 stepTwo on (iy, iz) acc = case findOverlaps iy acc of
@@ -54,7 +57,7 @@ stepTwo on (iy, iz) acc = case findOverlaps iy acc of
   [] -> M.insert iy (M.singleton iz ()) acc
   overlaps -> foldr (handleOverlap on iy f) acc overlaps
     where
-      f = stepThree on iz
+      f = todo -- stepThree on iz
 
 step :: Input -> Intervals -> Intervals
 step (on, (ix, iy, iz)) acc = case findOverlaps ix acc of
@@ -62,18 +65,17 @@ step (on, (ix, iy, iz)) acc = case findOverlaps ix acc of
   [] -> M.insert ix (M.singleton iy $ M.singleton iz ()) acc
   overlaps -> foldr (handleOverlap on ix f) acc overlaps
   where
-    f = stepTwo on (iy, iz)
+    f = todo -- stepTwo on (iy, iz)
 
 data Split = Keep | Combine | Add
 
-handleOverlap :: (Monoid a) => Bool -> Interval -> (a -> a) -> Interval -> Map Interval a -> Map Interval a
-handleOverlap on i combineWith i' acc
-  | i == i' = M.adjust combineWith i acc
-  | otherwise = foldr handle (M.delete i' acc) $ split on i i'
+handleOverlap :: (Monoid a) => Bool -> Interval -> (a -> Map Interval a -> Map Interval a) -> Interval -> Map Interval a -> Map Interval a
+handleOverlap on i combine i' acc =
+  foldr handle (M.delete i' acc) $ split on i i'
   where
     handle (Keep, i) = M.insert i (acc ! i')
-    handle (Add, i) = M.insert i $ combineWith mempty
-    handle (Combine, i) = M.insert i $ combineWith (acc ! i')
+    handle (Add, i) = combine mempty
+    handle (Combine, i) = combine (acc ! i')
 
 split :: Bool -> Interval -> Interval -> [(Split, Interval)]
 split on i i' = filter (isValid . snd) $ go on i i'
